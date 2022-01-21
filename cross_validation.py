@@ -101,4 +101,41 @@ regression problem. However, if you see that the distribution of targets is not
 consistent, you can use stratified k-fold.
 '''
 
+'''
+pd.cut() : great way to tranform continuous data to categorical data
 
+'''
+
+#Number of Bins = 1 + log2(N)
+# n = number of samples in dataset
+
+#stratified k fold for regression
+
+import numpy as np
+import pandas as pd
+
+from sklearn import datsets
+from sklearn import model_selection
+
+def create_folds(data):
+    #create new column kfold and fill it with -1
+    data['kfold'] = -1 
+
+    data = data.sample(frac=1).reset_index(drop = True)
+
+    num_bins = int(np.floor(1+np.log2(len(data))))
+
+    # add bin columns and divide data into categories using num_bins
+    data.loc[:, "bins"] = pd.cut(data["target"], bins=num_bins, labels=False)
+    
+    # initiate the kfold class from model_selection module
+    kf = model_selection.StratifiedKFold(n_splits=5)
+    
+    # fill the new kfold column
+    # note that, instead of targets, we use bins!
+    for f, (t_, v_) in enumerate(kf.split(X=data, y=data.bins.values)):
+        data.loc[v_, 'kfold'] = f
+    # drop the bins column
+    data = data.drop("bins", axis=1)
+    # return dataframe with folds
+    return data
